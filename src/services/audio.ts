@@ -3,6 +3,9 @@
  * files simply no-op so the game runs before final audio is dropped in.
  * Respects the user's mute / haptics settings from metaStore.
  */
+import * as Haptics from 'expo-haptics';
+import { Audio } from 'expo-av';
+
 import { useMetaStore } from '../state/metaStore';
 
 type SfxName = 'flip' | 'coin' | 'death' | 'milestone';
@@ -11,24 +14,14 @@ type SfxName = 'flip' | 'coin' | 'death' | 'milestone';
 const sounds: Partial<Record<SfxName, any>> = {};
 let loaded = false;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let Haptics: any = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  Haptics = require('expo-haptics');
-} catch {
-  // haptics unavailable
-}
-
 export function initAudio(): void {
   if (loaded) return;
   loaded = true;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Audio } = require('expo-av');
     Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-    // Asset wiring: drop files into assets/sfx and map them here.
-    // sounds.flip = Audio.Sound.createAsync(require('../assets/sfx/flip.mp3')).sound;
+    // Asset wiring: drop .mp3 files into assets/sfx/ and map here, e.g.:
+    // Audio.Sound.createAsync(require('../../assets/sfx/flip.mp3'))
+    //   .then(({ sound }) => { sounds.flip = sound; });
   } catch {
     // audio unavailable — ignore
   }
@@ -41,14 +34,13 @@ export function playSfx(name: SfxName): void {
     try {
       snd.replayAsync();
     } catch {
-      // ignore playback errors
+      // ignore
     }
   }
 }
 
 export function haptic(kind: 'light' | 'heavy' = 'light'): void {
   if (!useMetaStore.getState().hapticsOn) return;
-  if (!Haptics) return;
   try {
     Haptics.impactAsync(
       kind === 'heavy'

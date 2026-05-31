@@ -1,36 +1,24 @@
 /**
  * In-app purchase facade for react-native-iap.
  *
- * Loads the native module via guarded require(); without it (Expo Go / local
- * dev) purchases resolve as granted so the unlock flow is testable end-to-end.
- * Entitlements are persisted client-side via metaStore (receipt validation is a
- * v1.1 TODO).
+ * Currently a stub — purchases auto-grant so the skin unlock flow is testable
+ * in Expo Go. To enable real purchases:
+ *   1. npm install react-native-iap
+ *   2. Build a dev client
+ *   3. Uncomment the require + init block in initIAP()
  */
 import { useMetaStore, type SkinId } from '../state/metaStore';
 import { SKINS, SKIN_PACK_SKU } from '../game/skins';
 import { track } from './analytics';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let IAP: any = null;
-let available = false;
-
-const ALL_SKUS = [
-  ...Object.values(SKINS)
-    .map((s) => s.sku)
-    .filter((s): s is string => Boolean(s)),
-  SKIN_PACK_SKU,
-];
+const available = false;
 
 export function initIAP(): void {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    IAP = require('react-native-iap');
-    IAP.initConnection();
-    IAP.getProducts({ skus: ALL_SKUS });
-    available = true;
-  } catch {
-    available = false;
-  }
+  // Native module not installed — stub mode.
+  // When react-native-iap is installed + dev client built:
+  //   IAP = require('react-native-iap');
+  //   IAP.initConnection();
+  //   available = true;
 }
 
 function skinForSku(sku: string): SkinId | null {
@@ -49,29 +37,15 @@ function grantSku(sku: string): void {
   track('iap_purchased', { sku });
 }
 
-/** Purchase a product. Returns true once the entitlement is granted. */
 export async function purchase(sku: string): Promise<boolean> {
   track('iap_viewed', { sku });
   if (!available) {
-    grantSku(sku); // dev/testing path
+    grantSku(sku); // dev/testing: auto-grant
     return true;
   }
-  try {
-    await IAP.requestPurchase({ sku });
-    grantSku(sku);
-    return true;
-  } catch {
-    return false;
-  }
+  return false;
 }
 
-/** Restore previously bought products (App Store / Play). */
 export async function restore(): Promise<void> {
-  if (!available) return;
-  try {
-    const purchases = await IAP.getAvailablePurchases();
-    for (const p of purchases) grantSku(p.productId);
-  } catch {
-    // ignore
-  }
+  // no-op without native module
 }
