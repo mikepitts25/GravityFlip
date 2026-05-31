@@ -19,18 +19,16 @@ export type AnalyticsEvent =
 
 type Props = Record<string, string | number | boolean | undefined>;
 
-const POSTHOG_KEY = process.env.EXPO_PUBLIC_POSTHOG_KEY;
-
 let client: { capture: (e: string, p?: Props) => void } | null = null;
 
-export async function initAnalytics(): Promise<void> {
-  if (!POSTHOG_KEY) return; // disabled — facade becomes a no-op/logger
+export function initAnalytics(): void {
+  const key = process.env.EXPO_PUBLIC_POSTHOG_KEY;
+  if (!key) return;
   try {
-    // Lazy import so the dependency is optional for local/dev builds.
-    const mod = await import('posthog-react-native');
-    const PostHog = (mod as { default?: unknown }).default ?? mod;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    client = new (PostHog as any)(POSTHOG_KEY, {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('posthog-react-native');
+    const PostHog = mod.default ?? mod;
+    client = new PostHog(key, {
       host: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
     });
   } catch {

@@ -1,9 +1,10 @@
 /**
  * In-app purchase facade for react-native-iap.
  *
- * Loads the native module lazily; without it (Expo Go / local dev) purchases
- * resolve as granted so the unlock flow is testable end-to-end. Entitlements
- * are persisted client-side via metaStore (receipt validation is a v1.1 TODO).
+ * Loads the native module via guarded require(); without it (Expo Go / local
+ * dev) purchases resolve as granted so the unlock flow is testable end-to-end.
+ * Entitlements are persisted client-side via metaStore (receipt validation is a
+ * v1.1 TODO).
  */
 import { useMetaStore, type SkinId } from '../state/metaStore';
 import { SKINS, SKIN_PACK_SKU } from '../game/skins';
@@ -20,13 +21,12 @@ const ALL_SKUS = [
   SKIN_PACK_SKU,
 ];
 
-export async function initIAP(): Promise<void> {
+export function initIAP(): void {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod: any = await import('react-native-iap');
-    IAP = mod;
-    await mod.initConnection();
-    await mod.getProducts({ skus: ALL_SKUS });
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    IAP = require('react-native-iap');
+    IAP.initConnection();
+    IAP.getProducts({ skus: ALL_SKUS });
     available = true;
   } catch {
     available = false;
@@ -58,7 +58,7 @@ export async function purchase(sku: string): Promise<boolean> {
   }
   try {
     await IAP.requestPurchase({ sku });
-    grantSku(sku); // for consumables/validation, finishTransaction in a listener
+    grantSku(sku);
     return true;
   } catch {
     return false;

@@ -23,10 +23,11 @@ export default function App() {
   // One-time boot: load saved data and initialize optional services.
   useEffect(() => {
     void hydrate();
-    void initAnalytics().then(() => track('session_start'));
-    void initAudio();
-    void initAds();
-    void initIAP();
+    initAnalytics();
+    track('session_start');
+    initAudio();
+    initAds();
+    initIAP();
   }, [hydrate]);
 
   return (

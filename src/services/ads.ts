@@ -1,7 +1,7 @@
 /**
  * Ads facade for AdMob (react-native-google-mobile-ads).
  *
- * The native module is loaded lazily and guarded: in Expo Go or any build
+ * The native module is loaded via guarded require(): in Expo Go or any build
  * without the module, every method degrades gracefully so gameplay is never
  * blocked. Wire real ads by adding the dependency and running a dev client.
  *
@@ -15,20 +15,18 @@ const MIN_INTERSTITIAL_GAP_MS = 60_000;
 
 let lastInterstitialAt = 0;
 
-// Resolved lazily; null means ads are unavailable in this build.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mobileAds: any = null;
 let available = false;
 
-export async function initAds(): Promise<void> {
+export function initAds(): void {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod: any = await import('react-native-google-mobile-ads');
-    mobileAds = mod;
-    await mod.default().initialize();
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    mobileAds = require('react-native-google-mobile-ads');
+    mobileAds.default().initialize();
     available = true;
   } catch {
-    available = false; // running without the native module — that's fine
+    available = false;
   }
 }
 
