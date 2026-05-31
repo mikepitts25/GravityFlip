@@ -25,6 +25,6 @@
     "web": {
       "bundler": "metro"
     },
-    "plugins": ["expo-av", "react-native-reanimated"]
+    "plugins": ["expo-av"]
   }
 }
